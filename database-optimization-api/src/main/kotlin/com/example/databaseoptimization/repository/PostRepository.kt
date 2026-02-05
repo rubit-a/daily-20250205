@@ -3,6 +3,7 @@ package com.example.databaseoptimization.repository
 import com.example.databaseoptimization.data.entity.PostJpaEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
@@ -46,4 +47,23 @@ interface PostRepository : JpaRepository<PostJpaEntity, Long> {
     // 단건 조회 + User + Comments
     @Query("SELECT p FROM PostJpaEntity p JOIN FETCH p.user LEFT JOIN FETCH p.comments WHERE p.id = :id")
     fun findByIdWithUserAndComments(id: Long): PostJpaEntity?
+
+    // ========== @EntityGraph 방식 ==========
+
+    // @EntityGraph: User만 함께 조회
+    @EntityGraph(attributePaths = ["user"])
+    fun findAllByOrderByCreatedAtDesc(): List<PostJpaEntity>
+
+    // @EntityGraph: User + Comments 함께 조회
+    @EntityGraph(attributePaths = ["user", "comments"])
+    fun findWithUserAndCommentsById(id: Long): PostJpaEntity?
+
+    // @EntityGraph + 페이지네이션
+    @EntityGraph(attributePaths = ["user"])
+    fun findAllByOrderByIdDesc(pageable: Pageable): Page<PostJpaEntity>
+
+    // @EntityGraph: 커스텀 쿼리와 함께 사용
+    @EntityGraph(attributePaths = ["user"])
+    @Query("SELECT p FROM PostJpaEntity p WHERE p.user.id = :userId")
+    fun findByUserIdWithUser(userId: Long): List<PostJpaEntity>
 }

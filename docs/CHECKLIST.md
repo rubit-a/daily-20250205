@@ -63,8 +63,8 @@
 - [x] 해결 후 쿼리 횟수 확인 (1번으로 감소) ✓
 
 ### 해결 방법 2: @EntityGraph
-- [ ] `@EntityGraph(attributePaths = ["user", "comments"])`
-- [ ] Fetch Join과 비교
+- [x] `@EntityGraph(attributePaths = ["user", "comments"])`
+- [x] Fetch Join과 비교 (둘 다 1개 쿼리, JOIN 타입 차이)
 
 ### 해결 방법 3: @BatchSize
 - [ ] Entity 또는 컬렉션에 `@BatchSize(size = 100)` 적용
@@ -111,7 +111,7 @@
 - [ ] `GET /api/users/{userId}/posts` - 사용자별 조회
 
 ### 테스트
-- [x] `@SpringBootTest`로 Repository 테스트
+- [x] `@DataJpaTest`로 Repository 테스트
 - [x] N+1 해결 전/후 쿼리 횟수 비교 테스트 (6개 → 1개)
 - [ ] 페이지네이션 동작 확인
 
@@ -132,10 +132,10 @@
 | 프로젝트 설정 | 6 | 6 |
 | JPA Entity | 12 | 12 |
 | Repository | 5 | 5 |
-| N+1 해결 | 4 | 8 |
+| N+1 해결 | 6 | 8 |
 | 인덱스 최적화 | 3 | 7 |
 | 페이지네이션 | 0 | 6 |
 | Controller & 테스트 | 2 | 6 |
 | 성능 측정 | 0 | 3 |
 
-**총 진행률**: 32 / 53 (60%)
+**총 진행률**: 34 / 53 (64%)
