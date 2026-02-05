@@ -41,26 +41,26 @@
 ## 3. Repository 구현
 
 ### JPA Repository
-- [ ] `UserRepository` (JpaRepository 상속)
-- [ ] `PostRepository` (JpaRepository 상속)
-- [ ] `CommentRepository` (JpaRepository 상속)
+- [x] `UserRepository` (JpaRepository 상속)
+- [x] `PostRepository` (JpaRepository 상속)
+- [x] `CommentRepository` (JpaRepository 상속)
 
 ### 커스텀 쿼리 메서드
-- [ ] `findByUserId()` - 사용자별 게시글 조회
-- [ ] `findByCreatedAtBetween()` - 기간별 조회
+- [x] `findByUserId()` - 사용자별 게시글 조회
+- [x] `findByCreatedAtBetween()` - 기간별 조회
 
 ---
 
 ## 4. N+1 문제 해결
 
 ### 문제 확인
-- [ ] Post 목록 조회 시 User 정보 N+1 발생 확인
+- [x] Post 목록 조회 시 User 정보 N+1 발생 확인 (6개 쿼리: 1 + 5 Users)
 - [ ] Post 상세 조회 시 Comments N+1 발생 확인
-- [ ] SQL 로그에서 쿼리 횟수 기록 (해결 전)
+- [x] SQL 로그에서 쿼리 횟수 기록 (해결 전)
 
 ### 해결 방법 1: Fetch Join (JPQL)
-- [ ] `@Query("SELECT p FROM PostJpaEntity p JOIN FETCH p.user")`
-- [ ] 해결 후 쿼리 횟수 확인 (1번으로 감소)
+- [x] `@Query("SELECT p FROM PostJpaEntity p JOIN FETCH p.user")`
+- [x] 해결 후 쿼리 횟수 확인 (1번으로 감소) ✓
 
 ### 해결 방법 2: @EntityGraph
 - [ ] `@EntityGraph(attributePaths = ["user", "comments"])`
@@ -111,8 +111,8 @@
 - [ ] `GET /api/users/{userId}/posts` - 사용자별 조회
 
 ### 테스트
-- [ ] `@DataJpaTest`로 Repository 테스트
-- [ ] N+1 해결 전/후 쿼리 횟수 비교 테스트
+- [x] `@SpringBootTest`로 Repository 테스트
+- [x] N+1 해결 전/후 쿼리 횟수 비교 테스트 (6개 → 1개)
 - [ ] 페이지네이션 동작 확인
 
 ---
@@ -131,11 +131,11 @@
 |------|------|------|
 | 프로젝트 설정 | 6 | 6 |
 | JPA Entity | 12 | 12 |
-| Repository | 0 | 5 |
-| N+1 해결 | 0 | 8 |
+| Repository | 5 | 5 |
+| N+1 해결 | 4 | 8 |
 | 인덱스 최적화 | 3 | 7 |
 | 페이지네이션 | 0 | 6 |
-| Controller & 테스트 | 0 | 6 |
+| Controller & 테스트 | 2 | 6 |
 | 성능 측정 | 0 | 3 |
 
-**총 진행률**: 21 / 53 (40%)
+**총 진행률**: 32 / 53 (60%)
