@@ -1,188 +1,141 @@
-# Database 인덱싱 및 쿼리 최적화 체크리스트 (Kotlin/Spring)
+# Database 인덱싱 및 쿼리 최적화 체크리스트
 
-## 프로젝트 설정
+## 1. 프로젝트 설정
 
-### 의존성 추가
+### 의존성
 - [x] `spring-boot-starter-data-jpa` 추가
 - [x] `h2` 데이터베이스 추가
-- [x] SQL 로깅 설정 (`show_sql`, `format_sql`)
 
 ### application.yml 설정
 - [x] H2 인메모리 DB 설정
-- [x] H2 Console 활성화
+- [x] H2 Console 활성화 (`/h2-console`)
 - [x] JPA ddl-auto 설정 (`create-drop`)
-- [x] Hibernate SQL 로그 레벨 설정
-- [x] batch_fetch_size 설정
+- [x] SQL 로깅 설정 (`show_sql`, `format_sql`)
+- [x] `hibernate.default_batch_fetch_size` 설정
 
 ---
 
-## JPA Entity 작성
+## 2. JPA Entity 작성
 
 ### UserJpaEntity
-- [ ] `@Entity`, `@Table` 어노테이션
-- [ ] `@Id`, `@GeneratedValue` 설정
-- [ ] `@Column` 속성 정의 (nullable, length, unique)
-- [ ] email unique 인덱스 (`@Table(indexes = [...])`)
-- [ ] `@OneToMany(mappedBy = "user")` - Post 목록
-- [ ] `FetchType.LAZY` 설정
-- [ ] Domain Entity 변환 메서드 (`toDomain()`)
+- [x] `@Entity`, `@Table` 어노테이션
+- [x] `@Id`, `@GeneratedValue` 설정
+- [x] `@Column` 속성 정의 (nullable, length, unique)
+- [x] email unique 인덱스 (`@Table(indexes = [...])`)
+- [x] `@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)`
 
 ### PostJpaEntity
-- [ ] `@Entity`, `@Table` 어노테이션
-- [ ] title, content 필드
-- [ ] `@ManyToOne(fetch = FetchType.LAZY)` - User 참조
-- [ ] `@JoinColumn(name = "user_id")` 외래 키
-- [ ] createdAt 필드
-- [ ] 인덱스: created_at, (user_id + created_at) 복합 인덱스
-- [ ] Domain Entity 변환 메서드
+- [x] `@Entity`, `@Table` 어노테이션
+- [x] `@ManyToOne(fetch = FetchType.LAZY)` - User 참조
+- [x] `@JoinColumn(name = "user_id")` 외래 키
+- [x] 인덱스: `idx_post_created_at` (created_at)
+- [x] 복합 인덱스: `idx_post_user_created` (user_id, created_at)
+- [x] `@OneToMany` - Comment 목록
 
 ### CommentJpaEntity
-- [ ] `@Entity`, `@Table` 어노테이션
-- [ ] content 필드
-- [ ] `@ManyToOne` - Post 참조
-- [ ] `@ManyToOne` - User 참조 (작성자)
-- [ ] createdAt 필드
-- [ ] Domain Entity 변환 메서드
+- [x] `@Entity`, `@Table` 어노테이션
+- [x] `@ManyToOne(fetch = FetchType.LAZY)` - Post, User 참조
 
 ---
 
-## Domain Entity 추가
+## 3. Repository 구현
 
-### Post
-- [ ] 순수 Kotlin data class
-- [ ] id, title, content, userId, createdAt 필드
-- [ ] companion object `create()` 팩토리 메서드
-- [ ] validate() 비즈니스 규칙
+### JPA Repository
+- [ ] `UserRepository` (JpaRepository 상속)
+- [ ] `PostRepository` (JpaRepository 상속)
+- [ ] `CommentRepository` (JpaRepository 상속)
 
-### Comment
-- [ ] 순수 Kotlin data class
-- [ ] id, content, postId, userId, createdAt 필드
-- [ ] companion object `create()` 팩토리 메서드
-
-### Repository 인터페이스
-- [ ] `PostRepository` 인터페이스 생성
-- [ ] `CommentRepository` 인터페이스 생성
+### 커스텀 쿼리 메서드
+- [ ] `findByUserId()` - 사용자별 게시글 조회
+- [ ] `findByCreatedAtBetween()` - 기간별 조회
 
 ---
 
-## Mapper 작성
-
-- [ ] `UserMapper` (Domain User <-> UserJpaEntity)
-- [ ] `PostMapper` (Domain Post <-> PostJpaEntity)
-- [ ] `CommentMapper` (Domain Comment <-> CommentJpaEntity)
-
----
-
-## Repository 구현체 교체
-
-### JPA Repository 인터페이스
-- [ ] `UserJpaRepository` (JpaRepository 상속)
-- [ ] `PostJpaRepository` (JpaRepository 상속)
-- [ ] `CommentJpaRepository` (JpaRepository 상속)
-
-### 구현체 교체
-- [ ] `UserRepositoryImpl` InMemory → JPA 교체
-- [ ] `PostRepositoryImpl` 생성
-- [ ] `CommentRepositoryImpl` 생성
-- [ ] 기존 InMemoryDataSource 제거 (또는 유지)
-
----
-
-## Use Case 추가
-
-- [ ] `CreatePostUseCase` 게시글 생성
-- [ ] `GetPostsByUserUseCase` 사용자별 게시글 조회
-- [ ] `GetPostWithCommentsUseCase` 게시글 + 댓글 조회
-- [ ] `CreateCommentUseCase` 댓글 생성
-
----
-
-## Presentation Layer 추가
-
-### DTO
-- [ ] `PostRequest`, `PostResponse` DTO
-- [ ] `CommentRequest`, `CommentResponse` DTO
-- [ ] 페이지네이션 응답 DTO
-
-### Controller
-- [ ] `PostController` 생성
-  - [ ] `POST /api/posts` 게시글 생성
-  - [ ] `GET /api/posts` 전체 조회 (페이지네이션)
-  - [ ] `GET /api/posts/{id}` 상세 조회 (댓글 포함)
-  - [ ] `GET /api/users/{userId}/posts` 사용자별 조회
-- [ ] `CommentController` 생성
-  - [ ] `POST /api/posts/{postId}/comments` 댓글 생성
-
----
-
-## N+1 문제 해결
+## 4. N+1 문제 해결
 
 ### 문제 확인
-- [ ] SQL 로그에서 N+1 발생 확인
-- [ ] 쿼리 횟수 기록 (해결 전)
+- [ ] Post 목록 조회 시 User 정보 N+1 발생 확인
+- [ ] Post 상세 조회 시 Comments N+1 발생 확인
+- [ ] SQL 로그에서 쿼리 횟수 기록 (해결 전)
 
-### 해결 적용
-- [ ] Fetch Join (JPQL `JOIN FETCH`) 적용
-- [ ] `@EntityGraph` 적용
+### 해결 방법 1: Fetch Join (JPQL)
+- [ ] `@Query("SELECT p FROM PostJpaEntity p JOIN FETCH p.user")`
 - [ ] 해결 후 쿼리 횟수 확인 (1번으로 감소)
 
----
+### 해결 방법 2: @EntityGraph
+- [ ] `@EntityGraph(attributePaths = ["user", "comments"])`
+- [ ] Fetch Join과 비교
 
-## 인덱스 적용
-
-### 인덱스 설정
-- [ ] email unique 인덱스
-- [ ] post.created_at 인덱스
-- [ ] post(user_id, created_at) 복합 인덱스
-
-### 검증
-- [ ] 테스트 데이터 삽입 (사용자 100명, 게시글 1000개)
-- [ ] 인덱스 적용 전/후 쿼리 성능 비교
-- [ ] EXPLAIN 실행 계획 확인
+### 해결 방법 3: @BatchSize
+- [ ] Entity 또는 컬렉션에 `@BatchSize(size = 100)` 적용
+- [ ] IN 절로 묶어서 조회되는지 확인
 
 ---
 
-## 페이지네이션
+## 5. 인덱스 최적화
 
+### 인덱스 설정 확인
+- [x] `idx_user_email` - email unique 인덱스
+- [x] `idx_post_created_at` - 생성일 인덱스
+- [x] `idx_post_user_created` - (user_id, created_at) 복합 인덱스
+
+### 인덱스 효과 검증
+- [ ] 테스트 데이터 삽입 (사용자 100명, 게시글 1000개, 댓글 5000개)
+- [ ] H2 Console에서 `EXPLAIN` 실행
+- [ ] 인덱스 사용 여부 확인
+- [ ] 복합 인덱스 컬럼 순서 영향 테스트
+
+---
+
+## 6. 페이지네이션
+
+### 기본 페이지네이션
 - [ ] `Pageable` 파라미터 적용
-- [ ] `Page<T>` 또는 `Slice<T>` 반환
-- [ ] 정렬 기능 (Sort)
-- [ ] Controller에서 page, size, sort 파라미터 수신
+- [ ] `Page<T>` 반환 (총 개수 포함)
+- [ ] `Slice<T>` 반환 (총 개수 없이 - 더 효율적)
+
+### 정렬
+- [ ] `Sort.by("createdAt").descending()` 적용
+- [ ] 복합 정렬 테스트
+
+### 커버링 인덱스
+- [ ] 페이지네이션 + 정렬이 인덱스를 타는지 확인
 
 ---
 
-## 테스트
+## 7. Controller & 테스트
 
-### Repository 테스트
-- [ ] `@DataJpaTest` 활용
-- [ ] 저장/조회 테스트
-- [ ] 연관 관계 조회 테스트
-- [ ] 페이지네이션 테스트
+### Controller
+- [ ] `GET /api/posts` - 전체 조회 (페이지네이션)
+- [ ] `GET /api/posts/{id}` - 상세 조회 (댓글 포함)
+- [ ] `GET /api/users/{userId}/posts` - 사용자별 조회
 
-### UseCase 테스트
-- [ ] MockK로 Repository mock
-- [ ] 비즈니스 로직 검증
-
-### 기능 테스트
-- [ ] 서버 실행 확인
-- [ ] POST/GET API 동작 확인
-- [ ] N+1 해결 확인 (SQL 로그)
+### 테스트
+- [ ] `@DataJpaTest`로 Repository 테스트
+- [ ] N+1 해결 전/후 쿼리 횟수 비교 테스트
+- [ ] 페이지네이션 동작 확인
 
 ---
 
-## 완료율
+## 8. 성능 측정 (선택)
 
-### 필수 항목
-- 프로젝트 설정: 5 / 5 ✅
-- JPA Entity: 0 / 18
-- Domain Entity: 0 / 8
-- Mapper: 0 / 3
-- Repository 교체: 0 / 7
-- Use Case: 0 / 4
-- Presentation: 0 / 9
-- N+1 해결: 0 / 4
-- 인덱스: 0 / 6
-- 페이지네이션: 0 / 4
-- 테스트: 0 / 7
+- [ ] 쿼리 실행 시간 로깅
+- [ ] 대량 데이터에서 인덱스 유무 비교
+- [ ] Fetch Join vs @BatchSize 성능 비교
 
-**총 진행률**: 5 / 75 (6%)
+---
+
+## 진행률
+
+| 항목 | 완료 | 전체 |
+|------|------|------|
+| 프로젝트 설정 | 6 | 6 |
+| JPA Entity | 12 | 12 |
+| Repository | 0 | 5 |
+| N+1 해결 | 0 | 8 |
+| 인덱스 최적화 | 3 | 7 |
+| 페이지네이션 | 0 | 6 |
+| Controller & 테스트 | 0 | 6 |
+| 성능 측정 | 0 | 3 |
+
+**총 진행률**: 21 / 53 (40%)
