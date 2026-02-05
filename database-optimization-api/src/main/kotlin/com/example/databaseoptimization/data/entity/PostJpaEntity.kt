@@ -1,6 +1,7 @@
 package com.example.databaseoptimization.data.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 import java.time.LocalDateTime
 
 @Entity
@@ -29,6 +30,7 @@ class PostJpaEntity(
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
+    @BatchSize(size = 100)  // N+1 해결: Comments 조회 시 IN 절로 묶어서 조회
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
     val comments: MutableList<CommentJpaEntity> = mutableListOf()
 )
