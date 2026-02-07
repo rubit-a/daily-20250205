@@ -183,4 +183,51 @@ class PostRepositoryNPlusOneTest {
         assertTrue(n1QueryCount > fetchJoinQueryCount)
         assertEquals(1, fetchJoinQueryCount)
     }
+
+    @Test
+    @DisplayName("N+1 문제 발생: Post 상세 조회 시 Comments 접근하면 추가 쿼리 발생")
+    fun `findById causes N+1 problem when accessing comments`() {
+        println("\n" + "=".repeat(60))
+        println("Post 상세 조회 시 Comments N+1 문제 테스트")
+        println("=".repeat(60))
+
+        // 모든 Post 조회 (LAZY이므로 comments 로딩 안 됨)
+        println("\n>>> findAll() 실행")
+        val posts = postRepository.findAll()
+        println(">>> Post ${posts.size}개 조회 완료 (쿼리 1개)")
+
+        println("\n>>> 각 Post의 Comments 접근 시작 (N+1 발생!):")
+        var commentQueryCount = 0
+        posts.forEach { post ->
+            val comments = post.comments  // LAZY 로딩 → 추가 쿼리!
+            println("   → Post '${post.title}' → comments ${comments.size}개 로딩 (select from comments 쿼리 발생)")
+            commentQueryCount++
+        }
+
+        println("\n>>> 결과 요약:")
+        println("   - posts 조회: 1개 쿼리")
+        println("   - comments 조회: ${commentQueryCount}개 쿼리 (Post마다 1개씩, N+1 문제!)")
+        println("   - 총 쿼리 수: ${1 + commentQueryCount}개")
+        println("=".repeat(60))
+
+        println("\n>>> Fetch Join으로 해결:")
+        entityManager.clear()
+
+        println(">>> findAllWithUserAndComments() 실행 (Fetch Join)")
+        val postsWithComments = postRepository.findAllWithUserAndComments()
+        println(">>> 쿼리 1개로 Post + User + Comments 모두 로딩!\n")
+
+        postsWithComments.forEach { post ->
+            println("   - Post: ${post.title}, User: ${post.user.name}, Comments: ${post.comments.size}개")
+        }
+
+        println("\n>>> 비교 결과:")
+        println("   findAll() + LAZY comments: ${1 + commentQueryCount}개 쿼리")
+        println("   findAllWithUserAndComments(): 1개 쿼리")
+        println("   절감 효과: ${commentQueryCount}개 감소!")
+        println("=".repeat(60) + "\n")
+
+        assertEquals(10, posts.size)
+        assertTrue(commentQueryCount >= 10, "Post마다 comments 쿼리가 발생해야 합니다")
+    }
 }
