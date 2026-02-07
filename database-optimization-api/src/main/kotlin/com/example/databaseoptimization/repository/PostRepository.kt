@@ -3,6 +3,7 @@ package com.example.databaseoptimization.repository
 import com.example.databaseoptimization.data.entity.PostJpaEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -47,6 +48,14 @@ interface PostRepository : JpaRepository<PostJpaEntity, Long> {
     // 단건 조회 + User + Comments
     @Query("SELECT p FROM PostJpaEntity p JOIN FETCH p.user LEFT JOIN FETCH p.comments WHERE p.id = :id")
     fun findByIdWithUserAndComments(id: Long): PostJpaEntity?
+
+    // ========== Slice 방식 (총 개수 없이 효율적) ==========
+
+    // Slice: 총 개수 쿼리 없이 다음 페이지 존재 여부만 확인
+    fun findAllBy(pageable: Pageable): Slice<PostJpaEntity>
+
+    // Slice: 사용자별 조회
+    fun findSliceByUserId(userId: Long, pageable: Pageable): Slice<PostJpaEntity>
 
     // ========== @EntityGraph 방식 ==========
 
