@@ -106,14 +106,14 @@
 ## 7. Controller & 테스트
 
 ### Controller
-- [ ] `GET /api/posts` - 전체 조회 (페이지네이션)
-- [ ] `GET /api/posts/{id}` - 상세 조회 (댓글 포함)
-- [ ] `GET /api/users/{userId}/posts` - 사용자별 조회
+- [x] `GET /api/posts` - 전체 조회 (페이지네이션)
+- [x] `GET /api/posts/{id}` - 상세 조회 (댓글 포함)
+- [x] `GET /api/posts/users/{userId}` - 사용자별 조회
 
 ### 테스트
 - [x] `@DataJpaTest`로 Repository 테스트
 - [x] N+1 해결 전/후 쿼리 횟수 비교 테스트 (6개 → 1개)
-- [ ] 페이지네이션 동작 확인
+- [x] 페이지네이션 동작 확인
 
 ---
 
@@ -135,7 +135,7 @@
 | N+1 해결 | 8 | 8 |
 | 인덱스 최적화 | 7 | 7 |
 | 페이지네이션 | 6 | 6 |
-| Controller & 테스트 | 2 | 6 |
+| Controller & 테스트 | 6 | 6 |
 | 성능 측정 | 0 | 3 |
 
-**총 진행률**: 46 / 53 (87%)
+**총 진행률**: 50 / 53 (94%)
